@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: musicapp
+  namespace: default
+spec:
+  replicas: 1  # Only 1 replica to fit in t3.micro
+  selector:
+    matchLabels:
+      app: musicapp
+  template:
+    metadata:
+      labels:
+        app: musicapp
+    spec:
+      imagePullSecrets:
+        - name: ecr-registry
+      containers:
+        - name: musicapp
+          image: 329668418627.dkr.ecr.ap-south-1.amazonaws.com/musicwebapp-dev:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3001
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3001
+            initialDelaySeconds: 45  
+            periodSeconds: 15
+          # CRITICAL: Reduced for t3.micro (1GB RAM, 1 vCPU)
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "25m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+      
+
+
+
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: ns-3
+# --- 
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: musicapp
+#   namespace: ns-3
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: musicapp
+#   template:
+#     metadata:
+#       labels:
+#         app: musicapp
+#     spec:
+#       containers:
+#         - name: musicapp
+#           image: dzeba61175/musicapp:1.0
+#           imagePullPolicy: Always
+#           ports:
+#             - containerPort: 3001
