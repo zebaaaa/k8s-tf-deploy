@@ -1,9 +1,10 @@
 # Terraform
 terraform/.terraform/
 .terraform/
-terraform.tfstate*
-*.tfstate*
+*.tfstate
+*.tfstate.backup
 .crash.log
+.terraform.lock.hcl
 
 # Node / React
 node_modules/
