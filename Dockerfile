@@ -12,7 +12,7 @@ COPY client/package*.json ./
 RUN npm ci
 
 COPY client/ .
-RUN npm run build
+RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
 
 
 # ---------- Stage 2: Build Backend ----------
