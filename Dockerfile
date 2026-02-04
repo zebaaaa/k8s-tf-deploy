@@ -1,6 +1,6 @@
 
 # ---------- Stage 1: Build Frontend ----------
-FROM node:16 AS frontend-build
+FROM node:18 AS frontend-build
 WORKDIR /app/client
 
 # Improve npm network reliability (VERY important for CI)
@@ -16,7 +16,7 @@ RUN npm run build
 
 
 # ---------- Stage 2: Build Backend ----------
-FROM node:16-alpine
+FROM node:18-alpine
 WORKDIR /app
 
 # Same npm reliability fix
