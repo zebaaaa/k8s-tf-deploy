@@ -19,7 +19,8 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh """
-                docker build -t $ECR_REPO:$IMAGE_TAG .
+                docker build --network=host \
+                -t 329668418627.dkr.ecr.ap-south-1.amazonaws.com/musicwebapp-dev:${BUILD_NUMBER} .
                 """
             }
         }
