@@ -5,57 +5,43 @@ on:
     branches:
       - main
 
-env:
-  AWS_REGION: ap-south-1
-  ECR_REPO: 329668418627.dkr.ecr.ap-south-1.amazonaws.com/musicwebapp-dev
-  KUBE_DEPLOYMENT: musicapp
-
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+    - name: Setup AWS
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
 
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION \
-          | docker login --username AWS --password-stdin $ECR_REPO
+    - name: Login to ECR
+      run: |
+        aws ecr get-login-password --region ap-south-1 | \
+        docker login --username AWS --password-stdin 329668418627.dkr.ecr.ap-south-1.amazonaws.com
 
-      - name: Build Docker image
-        run: |
-          docker build -t $ECR_REPO:${{ github.run_number }} .
+    - name: Build and Push
+      run: |
+        docker build -t 329668418627.dkr.ecr.ap-south-1.amazonaws.com/musicwebapp-dev:latest .
+        docker push 329668418627.dkr.ecr.ap-south-1.amazonaws.com/musicwebapp-dev:latest
 
-      - name: Push Docker image to ECR
-        run: |
-          docker push $ECR_REPO:${{ github.run_number }}
+    - name: Setup kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ap-south-1 --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-      - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig \
-          --region $AWS_REGION \
-          --name ${{ secrets.EKS_CLUSTER_NAME }}
-
-      - name: Deploy to EKS
-        run: |
-          kubectl apply -f manifest/deployment.yml
-          kubectl apply -f manifest/service.yml
-
-      - name: Verify deployment
-        run: |
-          kubectl get deployments
-          kubectl get pods
-          kubectl get services
-
-
+    - name: Deploy
+      run: |
+        kubectl apply -f manifest/deployment.yml
+        kubectl apply -f manifest/service.yml
+        kubectl rollout restart deployment/musicapp
