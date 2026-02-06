@@ -49,5 +49,13 @@ jobs:
 
       - name: Deploy to EKS
         run: |
-          kubectl set image deployment/$KUBE_DEPLOYMENT \
-          $KUBE_DEPLOYMENT=$ECR_REPO:${{ github.run_number }}
+          kubectl apply -f manifest/deployment.yaml
+          kubectl apply -f manifest/service.yaml
+
+      - name: Verify deployment
+        run: |
+          kubectl get deployments
+          kubectl get pods
+          kubectl get services
+
+
